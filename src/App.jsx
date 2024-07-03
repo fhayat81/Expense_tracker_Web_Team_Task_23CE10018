@@ -9,6 +9,7 @@ import Settings from "./components/Settings";
 import Categories from "./components/Categories";
 import CategoryPopUp from "./components/CategoryPopUp";
 import Filter from "./components/Filter";
+import EditCategory from "./components/EditCategory";
 // income categories
 import awards from "./assets/awards.png";
 import coupon from "./assets/coupon.png";
@@ -52,8 +53,11 @@ function App() {
   const [balance, setBalance] = useState(savedData?.balance || 0);
   const [settings, setSettings] = useState(false);
   const [categoryPopUp, setCategoryPopUp] = useState(false);
+  const [editPopUp, setEditPopUp] = useState(false);
+  
 
   const [record, setRecord] = useState(savedData?.record || []);
+  const [dummy, setDummy] = useState(savedData?.record || []);
 
   const resetData = () => {
     setIncome(0);
@@ -93,10 +97,27 @@ function App() {
     ]);
   };
 
-  const newTransaction = (title, amount, category, note, type) => {
-    if (
-      type === "Income" ||
-      (type === "Expense" && parseFloat(balance) - parseFloat(amount) >= 0)
+  useEffect(()=>{
+    const sortedRecord = [...dummy].sort((a, b) => {
+      const dateA = [a.time.year, a.time.month, a.time.date];
+      const dateB = [b.time.year, b.time.month, b.time.date];
+      if(parseInt(dateA[0]) !== parseInt(dateB[0])){
+        return parseInt(dateA[0]) - parseInt(dateB[0]);
+      } else if(parseInt(dateA[1]) !== parseInt(dateB[1])){
+        return parseInt(dateA[1]) - parseInt(dateB[1]);
+      } else if(parseInt(dateA[2]) !== parseInt(dateB[2])){
+        return parseInt(dateA[2]) - parseInt(dateB[2]);
+      } else {
+        return 0;
+      }
+    });
+    setRecord(sortedRecord);
+  }, [dummy])
+
+  const newTransaction = (title, amount, category, note, type, date) => {
+    if (parseFloat(amount) >= 0 &&
+      (type === "Income" ||
+      (type === "Expense" && parseFloat(balance) - parseFloat(amount) >= 0))
     ) {
       const Amount = parseFloat(amount);
       const Balance = parseFloat(balance);
@@ -130,19 +151,18 @@ function App() {
           cat: category,
           type: type,
           note: note,
-          time: {
-            hours: t.getHours(),
-            minutes: t.getMinutes(),
-            date: t.getDate(),
-            month: t.getMonth(),
-            year: t.getFullYear(),
-            day: t.getDay(),
+          time: {       
+            date: date.getDate(),
+            month: date.getMonth(),
+            year: date.getFullYear(),
+            day: date.getDay(),
           },
         };
-        setRecord([...record, newTrans]);
+        setDummy([...record, newTrans]);
+        
       }
     } else {
-      alert("Expense is exceeding balance!");
+      alert("Expense is exceeding balance or your amount is invalid!");
     }
   };
 
@@ -152,7 +172,10 @@ function App() {
       setBalance(parseFloat(balance) - parseFloat(trans.amount));
       let updatedCategories = incomeCategories.map((data) =>
         data.id === trans.cat.id
-          ? { ...data, value: parseFloat(data.value) - parseFloat(trans.amount) }
+          ? {
+              ...data,
+              value: parseFloat(data.value) - parseFloat(trans.amount),
+            }
           : data
       );
 
@@ -162,7 +185,10 @@ function App() {
       setBalance(parseFloat(balance) + parseFloat(trans.amount));
       let updatedCategories = expenseCategories.map((data) =>
         data.id === trans.cat.id
-          ? { ...data, value: parseFloat(data.value) - parseFloat(trans.amount) }
+          ? {
+              ...data,
+              value: parseFloat(data.value) - parseFloat(trans.amount),
+            }
           : data
       );
 
@@ -212,6 +238,9 @@ function App() {
       { id: 18, img: Transportation, label: "Transportation", value: 0 },
     ]
   );
+
+  const [cat, setCat] = useState(incomeCategories[0]);
+  const [catType, setCatType] = useState("Income");
 
   const newCategoryInsert = (icon, name, type) => {
     if (name) {
@@ -329,6 +358,22 @@ function App() {
     record,
   ]);
 
+  const editCategoryPopUp = (category, type) => {
+    setCat(category);
+    setCatType(type);   
+    setEditPopUp(true);
+  }
+
+  const editCategory = (id, icon, name, type) => {
+    if(type === "Income"){
+      let updated = incomeCategories.map((data)=>(id===data.id?{...data, img: icon, label: name} : data));
+      setIncomeCategories(updated);
+    } else {
+      let updated = expenseCategories.map((data)=>(id===data.id?{...data, img: icon, label: name} : data));
+      setExpenseCategories(updated);
+    }
+  }
+
   return (
     <Router>
       <Navbar setSide={setSide} side={side} />
@@ -364,12 +409,12 @@ function App() {
           path="/searchtransaction"
           element={
             <Filter
-            currency={currency}
-            income={incomeCategories}
-            expense={expenseCategories}
-            newTransaction={newTransaction}
-            record={record}
-            deleteTransaction={deleteTransaction}
+              currency={currency}
+              income={incomeCategories}
+              expense={expenseCategories}
+              newTransaction={newTransaction}
+              record={record}
+              deleteTransaction={deleteTransaction}
             />
           }
         />
@@ -380,6 +425,7 @@ function App() {
               income={incomeCategories}
               expense={expenseCategories}
               setPopUp={setCategoryPopUp}
+              editCategoryPopUp={editCategoryPopUp}
               deleteCategory={deleteCategory}
             />
           }
@@ -399,6 +445,15 @@ function App() {
         Icon={Icon}
       />
       <ResetPopUp reset={reset} setReset={setReset} resetData={resetData} />
+      <EditCategory
+        editPopUp={editPopUp}
+        setEditPopUp={setEditPopUp}
+        newCategoryInsert={newCategoryInsert}
+        Icon={Icon}
+        cat={cat}
+        catType={catType}
+        editCategory={editCategory}
+      />
     </Router>
   );
 }

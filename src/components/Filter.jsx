@@ -36,7 +36,7 @@ const Filter = ({
   const [type, setType] = useState("Income");
   const [arr, setArr] = useState(record);
   const [range, setRange] = useState({ min: 0, max: 100 });
-  const [date, setDate] = useState({day: 1, month: 1, year: 2000})
+  const [date, setDate] = useState({ day: 0, month: 0, year: 0 });
 
   useEffect(() => setArr(record), [record]);
 
@@ -87,10 +87,17 @@ const Filter = ({
   };
 
   const filterdate = () => {
-    let updated = record.filter((data)=>((parseInt(data.time.date) === parseInt(date.day)) && (parseInt(data.time.month) === (parseInt(date.month)-parseInt(1)) && (parseInt(data.time.year) === parseInt(date.year)))));
+    let updated = record.filter(
+      (data) =>(
+        (parseInt(date.day) === 0 ||
+          parseInt(data.time.date) === parseInt(date.day)) &&
+        (parseInt(date.month) === 0 ||
+          (parseInt(data.time.month) === parseInt(date.month) - parseInt(1))) &&
+            (parseInt(date.year) === 0 ||
+              parseInt(data.time.year) === parseInt(date.year)))
+    );
     setArr(updated);
-
-  }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center my-2">
@@ -167,7 +174,13 @@ const Filter = ({
                     <input
                       type="number"
                       className="bg-slate-200 w-[40px] mx-1 rounded-lg border-2 border-slate-500 text-right"
-                      onChange={(e)=>{setDate({day: e.target.value, month: date.month, year: date.year})}}
+                      onChange={(e) => {
+                        setDate({
+                          day: e.target.value,
+                          month: date.month,
+                          year: date.year,
+                        });
+                      }}
                       value={date.day}
                     />
                   </div>
@@ -176,7 +189,13 @@ const Filter = ({
                     <input
                       type="number"
                       className="bg-slate-200 w-[40px] mx-1 rounded-lg border-2 border-slate-500 text-right"
-                      onChange={(e)=>{setDate({day: date.day, month: e.target.value, year: date.year})}}
+                      onChange={(e) => {
+                        setDate({
+                          day: date.day,
+                          month: e.target.value,
+                          year: date.year,
+                        });
+                      }}
                       value={date.month}
                     />
                   </div>
@@ -185,16 +204,32 @@ const Filter = ({
                     <input
                       type="number"
                       className="bg-slate-200 w-[80px] mx-1 rounded-lg border-2 border-slate-500 text-right"
-                      onChange={(e)=>{setDate({day: date.day, month: date.month, year: e.target.value})}}
+                      onChange={(e) => {
+                        setDate({
+                          day: date.day,
+                          month: date.month,
+                          year: e.target.value,
+                        });
+                      }}
                       value={date.year}
                     />
                   </div>
                 </div>
                 <div className="flex justify-end mx-2 my-1">
-                  <button onClick={()=>{filterdate()}} className="mx-1 text-slate-500 font-semibold border-4 border-slate-500 rounded-lg border-double  px-2 py-1 active:scale-95">
+                  <button
+                    onClick={() => {
+                      filterdate();
+                    }}
+                    className="mx-1 text-slate-500 font-semibold border-4 border-slate-500 rounded-lg border-double  px-2 py-1 active:scale-95"
+                  >
                     SEARCH
                   </button>
-                  <button onClick={()=>{setArr(record)}} className="text-slate-500 font-semibold border-4 border-slate-500 rounded-lg border-double  px-2 py-1 active:scale-95">
+                  <button
+                    onClick={() => {
+                      setArr(record);
+                    }}
+                    className="text-slate-500 font-semibold border-4 border-slate-500 rounded-lg border-double  px-2 py-1 active:scale-95"
+                  >
                     <IoClose className="text-xl scale-105 active:scale-100 mx-1" />
                   </button>
                 </div>
@@ -358,9 +393,6 @@ const Filter = ({
                 <div className="bg-slate-300 rounded-t-lg">
                   <h1 className="mx-2 my-1 text-lg font-semibold flex justify-between items-center">
                     <div className="flex gap-2">
-                      <p>
-                        {data.time.hours}:{data.time.minutes},
-                      </p>
                       <p>{data.time.date}</p>
                       <p>{month[data.time.month]}</p>
                       <p>{data.time.year},</p>
